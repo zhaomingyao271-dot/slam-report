@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机器人SLAM晨报</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Inter:ital,opsz,wght@0,14..32,400..600;1,14..32,400..600&display=swap" rel="stylesheet">
+<style>
+:root { color-scheme: light; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F8F9FB; --surface: #EEF0F4; --surface-hover: #E4E7EC;
+  --primary: #1A6B8A; --primary-dim: #134E66; --accent: #E8792B; --accent-dim: #C45D1A;
+  --text: #2A2E35; --text-secondary: #6E7480; --text-tertiary: #99A0AC;
+  --border: #DDE0E5; --border-light: #EAECF0; --star: #E8A838;
+  --success: #2D8A56; --warn: #D4752A; --radius: 6px; --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04); --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --font-mono: 'DM Mono', 'Courier New', monospace; --font-body: 'Inter', system-ui, sans-serif; --sidebar-w: 272px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+#sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; overflow-y: auto; padding: 20px 0; }
+.sidebar-brand { padding: 0 20px 16px; border-bottom: 1px solid var(--border-light); }
+.sidebar-brand .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--primary-dim)); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-mono); font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+.sidebar-brand h2 { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+.sidebar-brand p { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.sidebar-section-label { padding: 16px 20px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-family: var(--font-mono); }
+.date-list { list-style: none; padding: 0 12px; }
+.date-list li { margin-bottom: 1px; }
+.date-list button { width: 100%; text-align: left; background: none; border: none; padding: 8px 12px; border-radius: var(--radius); font-family: var(--font-body); font-size: 13px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s, color 0.15s; }
+.date-list button:hover { background: var(--surface-hover); color: var(--text); }
+.date-list button.active { background: #fff; color: var(--primary); font-weight: 600; box-shadow: var(--shadow-sm); }
+.date-list button .date-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.date-list button.active .date-dot { background: var(--accent); }
+.sidebar-tags { padding: 12px 20px; margin-top: auto; border-top: 1px solid var(--border-light); }
+.sidebar-tags .tag-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-family: var(--font-mono); margin-bottom: 8px; }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag-cloud span { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: #fff; color: var(--text-secondary); border: 1px solid var(--border); font-family: var(--font-body); white-space: nowrap; }
+#main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; padding-bottom: 60px; }
+.report-header { position: relative; padding: 32px 40px 28px; background: linear-gradient(160deg, #EDF3F7 0%, #F4F6FA 40%, #F8F9FB 100%); border-bottom: 1px solid var(--border); overflow: hidden; }
+.report-header .contour-bg { position: absolute; inset: 0; opacity: 0.07; pointer-events: none; }
+.report-header .contour-bg svg { width: 100%; height: 100%; }
+.report-header h1 { font-family: var(--font-mono); font-size: 26px; font-weight: 400; color: var(--text); letter-spacing: -0.02em; position: relative; }
+.report-header time { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--text-tertiary); font-family: var(--font-mono); position: relative; }
+.report-header .status-row { display: flex; gap: 16px; margin-top: 10px; position: relative; }
+.report-header .status-pill { font-size: 11px; padding: 3px 10px; border-radius: 99px; font-family: var(--font-mono); font-weight: 500; }
+.status-pill.papers { background: #E3EDF2; color: var(--primary); }
+.status-pill.projects { background: #FDF0E4; color: var(--accent); }
+.status-pill.trends { background: #E8F0E8; color: var(--success); }
+.report-content { padding: 24px 40px; }
+.section-block { margin-bottom: 36px; }
+.section-block:last-child { margin-bottom: 0; }
+.section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+.section-head h3 { font-family: var(--font-mono); font-size: 16px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+.section-head .count { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.paper-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: box-shadow 0.15s, border-color 0.15s; }
+.paper-card:hover { box-shadow: var(--shadow); border-color: #CDD3DB; }
+.paper-card .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.paper-card .star-rating { display: flex; gap: 1px; flex-shrink: 0; }
+.paper-card .star-rating svg { width: 14px; height: 14px; }
+.paper-card .star-rating svg.filled { color: var(--star); }
+.paper-card .star-rating svg.empty { color: var(--border); }
+.paper-card h4 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--text); flex: 1; }
+.paper-card .meta { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; line-height: 1.5; }
+.paper-card .meta strong { color: var(--text-secondary); font-weight: 500; }
+.paper-card .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 3px; font-family: var(--font-body); font-weight: 500; }
+.tag.core { background: #E3F0F5; color: #0F5B78; }
+.tag.method { background: #F5F3FF; color: #5B3EA8; }
+.tag.venue { background: #FDF0E4; color: #A0501A; }
+.tag.recommend { background: #E6F2E6; color: #1E6B3A; }
+.paper-card .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+.paper-card .detail-grid .label { color: var(--text-tertiary); font-weight: 500; }
+.paper-card .action-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.rec-badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+.rec-badge.must-read { background: #E6F2E6; color: #1E6B3A; }
+.rec-badge.skim { background: #FDF0E4; color: #A0501A; }
+.project-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: box-shadow 0.15s; }
+.project-card:hover { box-shadow: var(--shadow); }
+.project-card .proj-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.project-card h4 { font-size: 15px; font-weight: 600; }
+.project-card h4 a { color: var(--primary); text-decoration: none; font-family: var(--font-mono); font-size: 13px; word-break: break-all; }
+.project-card h4 a:hover { text-decoration: underline; }
+.project-card .gh-stars { font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); display: flex; align-items: center; gap: 4px; }
+.project-card .gh-stars svg { width: 14px; height: 14px; color: var(--star); }
+.project-card .proj-meta { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.project-card .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 12px; color: var(--text-secondary); }
+.trend-item { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.trend-item h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.trend-item p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+.opp-block { margin-bottom: 20px; }
+.opp-block h4 { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 8px; font-family: var(--font-mono); }
+.opp-item { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.opp-item .opp-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.opp-item .opp-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.opp-item .opp-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; font-family: var(--font-mono); }
+.actions-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.actions-table th { text-align: left; padding: 8px 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); border-bottom: 2px solid var(--border); }
+.actions-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+.actions-table td:first-child { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+.priority-pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+.priority-pill.p0 { background: #FCE4E4; color: #B83030; }
+.priority-pill.p1 { background: #FDF0E4; color: #A0501A; }
+.priority-pill.p2 { background: #E8F0E8; color: #1E6B3A; }
+@media (max-width: 860px) { #sidebar { display: none; } #main { margin-left: 0; } .report-header { padding: 20px 20px 18px; } .report-content { padding: 16px 20px; } .report-header h1 { font-size: 20px; } .paper-card .detail-grid { grid-template-columns: 1fr; } .project-card .proj-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .contour-bg * { animation: none !important; } * { transition-duration: 0.01ms !important; } }
+@keyframes drift-contour { 0% { transform: translateY(0); } 100% { transform: translateY(-20px); } }
+.contour-line { animation: drift-contour 18s ease-in-out infinite alternate; }
+.contour-line:nth-child(2) { animation-duration: 22s; animation-delay: -5s; }
+.contour-line:nth-child(3) { animation-duration: 26s; animation-delay: -10s; }
+.contour-line:nth-child(4) { animation-duration: 30s; animation-delay: -3s; }
+.contour-line:nth-child(5) { animation-duration: 20s; animation-delay: -8s; }
+@media print { #sidebar { display: none; } #main { margin-left: 0; } .report-header { background: none; border-bottom: 1px solid #000; } .paper-card, .project-card, .trend-item { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; } }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sidebar-brand"><div class="logo-icon">SL</div><h2>机器人SLAM晨报</h2><p>丘陵·履带·多传感器融合</p></div>
+  <div class="sidebar-section-label">往期报告</div>
+  <ul class="date-list" id="dateList"><li><button class="active" data-date="today"><span class="date-dot"></span>今日</button></li></ul>
+  <div class="sidebar-tags">
+    <div class="tag-label">研究方向</div>
+    <div class="tag-cloud">
+      <span>丘陵山地</span><span>履带机器人</span><span>LiDAR-IMU-RTK</span>
+      <span>多传感器融合</span><span>地形感知建图</span><span>可通行性分析</span>
+      <span>越野导航</span><span>Navigation2</span>
+    </div>
+  </div>
+</aside>
+<main id="main">
+  <header class="report-header">
+    <div class="contour-bg" aria-hidden="true">
+      <svg viewBox="0 0 800 140" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="#1A6B8A" stroke-width="1.2">
+          <path class="contour-line" d="M0,30 Q60,20 120,35 T240,28 T360,38 T480,22 T600,36 T720,28 T800,34"/>
+          <path class="contour-line" d="M0,52 Q80,42 140,55 T260,48 T380,58 T500,42 T620,56 T740,48 T800,54"/>
+          <path class="contour-line" d="M0,74 Q50,64 110,78 T230,68 T350,80 T470,62 T590,76 T710,68 T800,76"/>
+          <path class="contour-line" d="M0,96 Q70,86 130,100 T250,90 T370,102 T490,84 T610,98 T730,88 T800,98"/>
+          <path class="contour-line" d="M0,118 Q90,108 150,122 T270,112 T390,124 T510,106 T630,120 T750,110 T800,118"/>
+        </g>
+        <circle cx="680" cy="50" r="3" fill="#E8792B" opacity="0.6"><animate attributeName="opacity" values="0.6;0.2;0.6" dur="3s" repeatCount="indefinite"/></circle>
+        <circle cx="300" cy="80" r="2.5" fill="#E8792B" opacity="0.5"><animate attributeName="opacity" values="0.5;0.15;0.5" dur="3.5s" repeatCount="indefinite"/></circle>
+        <circle cx="500" cy="35" r="2" fill="#E8792B" opacity="0.4"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/></circle>
+      </svg>
+    </div>
+    <h1>机器人SLAM晨报</h1>
+    <time id="reportDate">加载中...</time>
+    <div class="status-row">
+      <span class="status-pill papers" id="pillPapers">—</span>
+      <span class="status-pill projects" id="pillProjects">—</span>
+      <span class="status-pill trends" id="pillTrends">—</span>
+    </div>
+  </header>
+  <div class="report-content" id="reportContent"></div>
+</main>
+<script src="data.js"></script>
+</body>
+</html>
