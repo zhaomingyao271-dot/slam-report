@@ -158,7 +158,7 @@ function renderReport(r){
 
 function renderSidebar(){
  var reports=A(),list=document.getElementById("dateList");
- var items='<li><button class="active" data-date="2026-07-14"><span class="date-dot"></span>今日 7/13</button></li>';
+ var items='<li><button class="active" data-date="2026-07-14"><span class="date-dot"></span>今日 7/14</button></li>';
  reports.forEach(function(r){var d=new Date(r.date+"T00:00:00");items+='<li><button data-date="'+r.date+'"><span class="date-dot"></span>'+(d.getMonth()+1)+"/"+d.getDate()+'</button></li>'});
  list.innerHTML=items;
  list.querySelectorAll("button").forEach(function(btn){btn.addEventListener("click",function(){list.querySelectorAll("button").forEach(function(b){b.classList.remove("active")});this.classList.add("active");var r=G(this.dataset.date);if(r)renderReport(r)})})
